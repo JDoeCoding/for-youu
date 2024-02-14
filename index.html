@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Valentine's Day Surprise</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        overflow: hidden;
+        background-color: #ffccff;
+    }
+    canvas {
+        display: block;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: -1;
+    }
+    .content {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        text-align: center;
+        z-index: 1;
+    }
+    h1 {
+        font-size: 48px;
+        color: white;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        font-family: 'Courier New', Courier, monospace;
+        animation: textAnimation 2s infinite alternate;
+    }
+    @keyframes textAnimation {
+        0% { transform: translateY(0); }
+        100% { transform: translateY(-20px); }
+    }
+    .buttons {
+        margin-top: 20px;
+    }
+    .button {
+        font-size: 24px;
+        padding: 10px 30px;
+        margin: 0 10px;
+        border-radius: 5px;
+        border: none;
+        cursor: pointer;
+        outline: none;
+        transition: transform 0.3s, background-color 0.3s;
+    }
+    .button:hover {
+        transform: scale(1.1);
+    }
+    #noBtn {
+        font-size: 20px;
+    }
+    #valentineWishes {
+        display: none;
+    }
+    #surpriseAnimation {
+        display: none;
+    }
+</style>
+</head>
+<body>
+
+<audio id="loveSong" autoplay loop>
+    <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mpeg">
+    Your browser does not support the audio element.
+</audio>
+
+<canvas id="canvas"></canvas>
+
+<div class="content" id="question">
+    <h1>Will you be my Valentine?</h1>
+    <div class="buttons">
+        <button class="button" onclick="answer('Yes')">Yes</button>
+        <button class="button" id="noBtn" onclick="answer('No')">No</button>
+    </div>
+</div>
+
+<div id="valentineWishes" class="content">
+    <h1>Happy Valentine's Day, my love!</h1>
+    <p>May our love continue to grow stronger with each passing day.</p>
+    <p>You mean everything to me, and I'm grateful to have you in my life.</p>
+</div>
+
+<div id="surpriseAnimation"></div>
+
+<script src="https://threejs.org/build/three.min.js"></script>
+<script src="https://threejs.org/examples/js/loaders/FBXLoader.js"></script>
+<script>
+    let scene, camera, renderer;
+    let loveEmoji;
+    let noCount = 0;
+
+    function init() {
+        scene = new THREE.Scene();
+        camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        renderer = new THREE.WebGLRenderer({canvas: document.getElementById('canvas'), antialias: true});
+        renderer.setSize(window.innerWidth, window.innerHeight);
+
+        const loader = new THREE.FBXLoader();
+        loader.load('https://threejs.org/examples/models/fbx/emoji/emoji.fbx', function (object) {
+            loveEmoji = object;
+            scene.add(loveEmoji);
+            loveEmoji.position.set(0, 5, -20);
+            loveEmoji.scale.set(0.1, 0.1, 0.1);
+        });
+
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+        scene.add(ambientLight);
+        const light = new THREE.PointLight(0xffffff, 0.5);
+        light.position.set(10, 10, 10);
+        scene.add(light);
+
+        camera.position.z = 5;
+        animate();
+    }
+
+    function animate() {
+        requestAnimationFrame(animate);
+        if (loveEmoji) {
+            loveEmoji.rotation.y += 0.01;
+        }
+        renderer.render(scene, camera);
+    }
+
+    function answer(response) {
+        if (response === 'No') {
+            noCount++;
+            document.getElementById('noBtn').style.fontSize = (20 - noCount * 2) + 'px';
+            document.getElementById('noBtn').innerHTML = 'Try again';
+            document.getElementById('noBtn').setAttribute('onclick', 'tryAgain()');
+            document.getElementById('noBtn').style.backgroundColor = '#ff6666';
+            document.getElementById('noBtn').style.color = '#fff';
+        } else if (response === 'Yes') {
+            document.getElementById('question').style.display = 'none';
+            document.getElementById('valentineWishes').style.display = 'block';
+            document.getElementById('surpriseAnimation').style.display = 'block';
+            animateSurprise();
+        }
+    }
+
+    function animateSurprise() {
+        const surpriseContainer = document.getElementById('surpriseAnimation');
+        const emojis = ['❤️'];
+        setInterval(() => {
+            const emoji = emojis[Math.floor(Math.random() * emojis.length)];
+            const emojiElement = document.createElement('div');
+            emojiElement.innerText = emoji;
+            emojiElement.style.position = 'absolute';
+            emojiElement.style.left = Math.random() * window.innerWidth + 'px';
+            emojiElement.style.top = '-50px';
+            emojiElement.style.fontSize = Math.floor(Math.random() * 40 + 20) + 'px';
+            emojiElement.style.color = '#' + Math.floor(Math.random() * 16777215).toString(16);
+            surpriseContainer.appendChild(emojiElement);
+            let distance = window.innerHeight + 50;
+            let duration = Math.random() * 5000 + 2000;
+            let startTime = performance.now();
+            function fall() {
+                let currentTime = performance.now();
+                let elapsedTime = currentTime - startTime;
+                let progress = elapsedTime / duration;
+                emojiElement.style.top = (progress * distance) + 'px';
+                if (progress < 1) {
+                    requestAnimationFrame(fall);
+                } else {
+                    surpriseContainer.removeChild(emojiElement);
+                }
+            }
+            fall();
+        }, 200);
+    }
+
+    function tryAgain() {
+        location.reload();
+    }
+
+    window.onload = init;
+</script>
+
+</body>
+</html>
